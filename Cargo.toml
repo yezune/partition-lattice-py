@@ -1,0 +1,36 @@
+# Standalone package: deliberately NOT a member of the L-VM workspace, so that
+# `cargo test --workspace` never has to link against libpython.
+[workspace]
+
+[package]
+name = "partition-lattice-py"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+description = "Python bindings for the partition-lattice crate"
+repository = "https://github.com/yezune/partition-lattice-py"
+rust-version = "1.82.0"
+publish = false          # the artifact is a wheel on PyPI, not a crate on crates.io
+readme = "README.md"
+
+[lib]
+name = "_partition_lattice"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+# The published crate, not a path: the bindings are built against exactly what a
+# Rust user would get, and the mirror can be built without the private workspace.
+#
+# Aliased to `pl` for readability: `Inner` below is the crate's `Partition`, and the
+# short alias keeps the binding code from reading like it re-implements it.
+pl = { package = "partition-lattice", version = "0.1.1" }
+
+[dependencies.pyo3]
+version = "0.22"
+# abi3-py38: one wheel works on CPython 3.8 and newer.
+features = ["abi3-py38"]
+
+[features]
+# maturin turns this on; plain `cargo test` leaves it off so the test binary can
+# link normally instead of expecting a Python interpreter to provide the symbols.
+extension-module = ["pyo3/extension-module"]

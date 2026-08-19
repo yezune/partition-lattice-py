@@ -1,0 +1,8 @@
+/target
+*.so
+
+# The repository root ignores `test_*.py` to keep ad-hoc scripts out. This package's
+# test suite is not an ad-hoc script -- it is the specification the extension module
+# is written against -- so it is re-included here. Without this line git drops it
+# from commits silently.
+!tests/test_*.py
