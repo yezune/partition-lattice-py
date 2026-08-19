@@ -4,7 +4,7 @@
 
 [package]
 name = "partition-lattice-py"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 description = "Python bindings for the partition-lattice crate"
@@ -28,7 +28,9 @@ pl = { package = "partition-lattice", version = "0.1.1" }
 [dependencies.pyo3]
 version = "0.22"
 # abi3-py38: one wheel works on CPython 3.8 and newer.
-features = ["abi3-py38"]
+# generate-import-lib: lets the Windows wheel be cross-compiled without a Windows
+# Python interpreter present to supply python3.lib.
+features = ["abi3-py38", "generate-import-lib"]
 
 [features]
 # maturin turns this on; plain `cargo test` leaves it off so the test binary can
