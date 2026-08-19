@@ -203,9 +203,9 @@ checksum = "9f7c3e4beb33f85d45ae3e3a1792185706c8e16d043238c593331cc7cd313b50"
 
 [[package]]
 name = "partition-lattice"
-version = "0.1.1"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7213dce0ac79d4f9d06dfdd49b2ee83f302f482fa348e780f0613e30218f4a00"
+checksum = "49d0b09e9e790109e408ff691612be0a197b6a7068015640f3a17ec0a49600a0"
 dependencies = [
  "bincode",
  "bitvec",
@@ -222,7 +222,7 @@ dependencies = [
 
 [[package]]
 name = "partition-lattice-py"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "partition-lattice",
  "pyo3",

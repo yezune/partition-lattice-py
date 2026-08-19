@@ -134,14 +134,21 @@ impl PyPartition {
 
     // ----------------------------------------------------------- operations ---
 
-    /// Common refinement (greatest lower bound).
-    fn meet(&self, other: &Self) -> PyResult<Self> {
+    /// Common refinement: the finest partition coarser than neither operand.
+    ///
+    /// Named for what it does, not for its position in the lattice. `meet` and `join`
+    /// name *opposite* operations in the two conventions the literature uses, so they
+    /// were removed in 0.2.0 rather than left to compute the wrong thing quietly.
+    fn refine(&self, other: &Self) -> PyResult<Self> {
         self.check_same_size(other)?;
         Ok(Self::new(self.inner.differentiate(&other.inner)))
     }
 
-    /// Common coarsening (least upper bound).
-    fn join(&self, other: &Self) -> PyResult<Self> {
+    /// Common coarsening: the coarsest partition finer than neither operand.
+    ///
+    /// The counterpart of [`Self::refine`]; see that method for why the name is what
+    /// it is.
+    fn coarsen(&self, other: &Self) -> PyResult<Self> {
         self.check_same_size(other)?;
         Ok(Self::new(self.inner.integrate(&other.inner)))
     }
@@ -234,27 +241,26 @@ impl PyPartition {
         self.inner.size()
     }
 
-    fn __and__(&self, other: &Self) -> PyResult<Self> {
-        self.meet(other)
-    }
-
-    fn __or__(&self, other: &Self) -> PyResult<Self> {
-        self.join(other)
-    }
-
-    fn __richcmp__(&self, other: &Self, op: pyo3::basic::CompareOp) -> PyResult<bool> {
+    /// Only equality is defined.
+    ///
+    /// `<=` used to mean the refinement order, but which way that order runs is
+    /// exactly what the two conventions disagree on: under Ellerman's, `a <= b` says
+    /// `a` is *coarser*. A comparison that silently reverses is worse than one that
+    /// does not exist, so the order operators raise `TypeError` and callers use
+    /// [`Self::refines`], whose reading is the same under either convention.
+    fn __richcmp__(
+        &self,
+        py: Python<'_>,
+        other: &Self,
+        op: pyo3::basic::CompareOp,
+    ) -> PyObject {
         use pyo3::basic::CompareOp::*;
         let same = self.inner.size() == other.inner.size() && self.ids() == other.ids();
-        Ok(match op {
-            Eq => same,
-            Ne => !same,
-            // The order is the refinement order, and it is only partial: `a <= b`
-            // being false does not make `a > b` true.
-            Le => self.refines(other)?,
-            Lt => !same && self.refines(other)?,
-            Ge => other.refines(self)?,
-            Gt => !same && other.refines(self)?,
-        })
+        match op {
+            Eq => same.into_py(py),
+            Ne => (!same).into_py(py),
+            _ => py.NotImplemented(),
+        }
     }
 
     fn __hash__(&self) -> u64 {

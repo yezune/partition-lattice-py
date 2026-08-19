@@ -51,34 +51,46 @@ def test_empty_partition():
 
 
 # ---------------------------------------------------------------- operations ---
-def test_meet_is_the_common_refinement():
+def test_refine_is_the_common_refinement():
     a, b = Partition([0, 0, 1, 1]), Partition([0, 1, 0, 1])
-    assert a.meet(b).block_count() == 4      # every element separated
-    assert a.join(b).block_count() == 1      # everything merged
+    assert a.refine(b).block_count() == 4      # every element separated
+    assert a.coarsen(b).block_count() == 1     # everything merged
 
 
-def test_meet_and_join_are_idempotent_and_commutative():
+def test_refine_and_coarsen_are_idempotent_and_commutative():
     a, b = Partition([0, 0, 1, 1]), Partition([0, 1, 0, 1])
-    assert a.meet(a) == a and a.join(a) == a
-    assert a.meet(b) == b.meet(a)
-    assert a.join(b) == b.join(a)
+    assert a.refine(a) == a and a.coarsen(a) == a
+    assert a.refine(b) == b.refine(a)
+    assert a.coarsen(b) == b.coarsen(a)
 
 
 def test_absorption():
     a, b = Partition([0, 0, 1, 2]), Partition([0, 1, 1, 2])
-    assert a.meet(a.join(b)) == a
-    assert a.join(a.meet(b)) == a
+    assert a.refine(a.coarsen(b)) == a
+    assert a.coarsen(a.refine(b)) == a
 
 
-def test_operator_aliases():
+def test_convention_dependent_names_are_gone():
+    """`meet`/`join`/`&`/`|`/`<=` meant the opposite operation under the other
+    convention, so they were removed rather than left to fail silently."""
     a, b = Partition([0, 0, 1, 1]), Partition([0, 1, 0, 1])
-    assert (a & b) == a.meet(b)
-    assert (a | b) == a.join(b)
+    for name in ("meet", "join"):
+        assert not hasattr(a, name), f"{name} must be gone, not silently reinterpreted"
+    for op in (lambda: a & b, lambda: a | b,
+               lambda: a <= b, lambda: a < b, lambda: a >= b, lambda: a > b):
+        with pytest.raises(TypeError):
+            op()
+
+
+def test_equality_still_works():
+    # Only the *order* comparisons were convention-dependent; equality was not.
+    assert Partition([0, 0, 1, 1]) == Partition([7, 7, 3, 3])
+    assert Partition([0, 0, 1, 1]) != Partition([0, 1, 0, 1])
 
 
 def test_size_mismatch_is_an_error():
     with pytest.raises(ValueError):
-        Partition([0, 0, 1]).meet(Partition([0, 1]))
+        Partition([0, 0, 1]).refine(Partition([0, 1]))
 
 
 # --------------------------------------------------------------------- order ---
@@ -87,14 +99,12 @@ def test_refinement_order_finer_is_smaller():
     fine, coarse = Partition([0, 1, 2, 3]), Partition([0, 0, 1, 1])
     assert fine.refines(coarse)
     assert not coarse.refines(fine)
-    assert fine <= coarse
-    assert fine < coarse
     assert Partition.discrete(4).refines(Partition.indiscrete(4))
 
 
 def test_meet_is_below_both_and_join_above_both():
     a, b = Partition([0, 0, 1, 2]), Partition([0, 1, 1, 2])
-    m, j = a.meet(b), a.join(b)
+    m, j = a.refine(b), a.coarsen(b)
     assert m.refines(a) and m.refines(b)
     assert a.refines(j) and b.refines(j)
 
@@ -153,6 +163,25 @@ def test_dit_xor_count_and_destr_creat():
     assert destr(a, a) == 0 and creat(a, a) == 0
     # destr(a, b) == 0 exactly when b refines a
     assert destr(a, Partition.discrete(4)) == 0
+
+
+# ------------------------------------------------- convention-neutral names ---
+def test_refine_is_finer_and_coarsen_is_coarser():
+    a, b = Partition([0, 0, 1, 2]), Partition([0, 1, 1, 2])
+    assert a.refine(b).refines(a) and a.refine(b).refines(b)
+    assert a.refines(a.coarsen(b)) and b.refines(a.coarsen(b))
+
+
+def test_refine_raises_entropy_and_coarsen_lowers_it():
+    # The one asymmetry no renaming can hide: h peaks at the discrete partition.
+    a, b = Partition([0, 0, 1, 2]), Partition([0, 1, 1, 2])
+    assert a.refine(b).logical_entropy() >= max(a.logical_entropy(), b.logical_entropy())
+    assert a.coarsen(b).logical_entropy() <= min(a.logical_entropy(), b.logical_entropy())
+
+
+def test_coarsen_rejects_size_mismatch():
+    with pytest.raises(ValueError):
+        Partition([0, 0, 1]).coarsen(Partition([0, 1]))
 
 
 # ------------------------------------------------------------------- dunders ---

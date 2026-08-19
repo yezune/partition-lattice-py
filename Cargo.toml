@@ -4,7 +4,7 @@
 
 [package]
 name = "partition-lattice-py"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 description = "Python bindings for the partition-lattice crate"
@@ -14,6 +14,7 @@ publish = false          # the artifact is a wheel on PyPI, not a crate on crate
 # CI config is repository furniture, not build input: it belongs in the public
 # mirror but not in the sdist users download.
 exclude = [".github/**"]
+readme = "README.md"
 
 [lib]
 name = "_partition_lattice"
@@ -25,7 +26,7 @@ crate-type = ["cdylib", "rlib"]
 #
 # Aliased to `pl` for readability: `Inner` below is the crate's `Partition`, and the
 # short alias keeps the binding code from reading like it re-implements it.
-pl = { package = "partition-lattice", version = "0.1.1" }
+pl = { package = "partition-lattice", version = "0.2.0" }
 
 [dependencies.pyo3]
 version = "0.22"
