@@ -11,7 +11,9 @@ description = "Python bindings for the partition-lattice crate"
 repository = "https://github.com/yezune/partition-lattice-py"
 rust-version = "1.82.0"
 publish = false          # the artifact is a wheel on PyPI, not a crate on crates.io
-readme = "README.md"
+# CI config is repository furniture, not build input: it belongs in the public
+# mirror but not in the sdist users download.
+exclude = [".github/**"]
 
 [lib]
 name = "_partition_lattice"
