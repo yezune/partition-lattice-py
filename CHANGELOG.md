@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.1
+
+Documentation only. The README now leads with what the examples are for: finding
+functional dependencies, comparing clusterings, minimising a DFA and finding connected
+components use four different standard algorithms, and all four reduce to `refine` and
+`coarsen`. The claim is measured rather than asserted — the logic in those examples is
+9, 21, 29 and 0 lines respectively, with the rest being printing and sample data.
+
+No code changed.
+
 ## 0.3.0 — breaking
 
 Five methods were renamed to match the Rust crate, and four runnable examples were

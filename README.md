@@ -74,9 +74,37 @@ exactly `w[u]` times. Note that a non-uniform weight breaks relabelling invarian
 Unlike the Rust `from_blocks`, `Partition.from_blocks` rejects a partial or
 overlapping cover instead of silently reassigning elements.
 
-## Examples
+## Examples — four algorithms, two operations
 
-Four demos, runnable as-is — `python examples/<name>.py`. Each has a Rust twin in the
+Finding functional dependencies, comparing clusterings, minimising a DFA, and finding
+connected components are four different problems with four different standard
+algorithms. All four turn out to be the same two lattice operations:
+
+| problem | usually reached for | what it is here |
+|---|---|---|
+| functional dependencies | TANE and relatives | `partition(X).refines(partition(Y))` |
+| comparing two clusterings | Rand, ARI, NMI | `coarsen` for the consensus, `destr` / `creat` for the direction |
+| DFA minimisation | Hopcroft, Moore | `refine` until `dit_count` stops growing |
+| connected components | union-find | `coarsen` folded over the edges |
+
+That is the case for the library. Not that it computes these faster, but that it is
+the structure those algorithms were reconstructing each time. Once the data is a
+partition, the parts that normally need care — fixed points, transitive closure,
+composite keys — come from the lattice rather than from you, and what is left is
+small: the logic in these examples is 9 lines for components, 21 for dependencies and
+29 for DFA minimisation, with the clustering one containing no algorithm at all, only
+calls. The rest of each file is printing and sample data.
+
+Two properties do the work throughout:
+
+- **Counts stay integers.** `dit_count` is the exact numerator of the entropy, so a
+  fixed point is `==` rather than `abs(a - b) < eps`, and near-misses rank without
+  float ties deciding the winner.
+- **The order is available, not just a number.** A similarity index answers *how much*.
+  `refine` and `coarsen` answer *what*: which distinctions two groupings agree on,
+  which one of them drew and the other erased.
+
+Run them as-is with `python examples/<name>.py`. Each has a Rust twin in the
 [crate](https://github.com/yezune/partition-lattice/tree/main/examples).
 
 | | what it shows |
