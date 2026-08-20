@@ -131,28 +131,28 @@ def test_entropy_is_monotone_under_refinement():
 
 def test_distance_is_a_metric_on_small_cases():
     a, b, c = Partition([0, 0, 1, 1]), Partition([0, 1, 0, 1]), Partition([0, 1, 2, 3])
-    assert a.distance(a) == 0.0
-    assert a.distance(b) == b.distance(a)
-    assert a.distance(c) <= a.distance(b) + b.distance(c) + 1e-12
+    assert a.ditset_xor_distance(a) == 0.0
+    assert a.ditset_xor_distance(b) == b.ditset_xor_distance(a)
+    assert a.ditset_xor_distance(c) <= a.ditset_xor_distance(b) + b.ditset_xor_distance(c) + 1e-12
 
 
 def test_mutual_information_and_divergence():
     a, b = Partition([0, 0, 1, 1]), Partition([0, 1, 0, 1])
     assert math.isclose(a.mutual_information(a), a.logical_entropy())
-    assert a.divergence(a) == 0.0
+    assert a.logical_divergence(a) == 0.0
 
 
 def test_weighted_entropy_matches_multiset_expansion():
     """A weight is a multiplicity: h_w(pi) == h of the expanded multiset."""
     p = Partition([0, 0, 1])
-    num, den = p.weighted_entropy([2, 1, 1])
+    num, den = p.logical_entropy_weighted([2, 1, 1])
     expanded = Partition([0, 0, 0, 1])  # element 0 repeated twice
     assert num / den == expanded.logical_entropy()
 
 
 def test_weighted_entropy_with_unit_weights_matches_plain():
     p = Partition([0, 0, 1, 1])
-    num, den = p.weighted_entropy([1, 1, 1, 1])
+    num, den = p.logical_entropy_weighted([1, 1, 1, 1])
     assert num / den == p.logical_entropy()
 
 

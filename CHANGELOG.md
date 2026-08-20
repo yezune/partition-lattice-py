@@ -1,5 +1,41 @@
 # Changelog
 
+## 0.3.0 — breaking
+
+Five methods were renamed to match the Rust crate, and four runnable examples were
+added.
+
+| was | is |
+|---|---|
+| `distance` | `ditset_xor_distance` |
+| `jaccard` | `dit_set_jaccard` |
+| `divergence` | `logical_divergence` |
+| `weighted_entropy` | `logical_entropy_weighted` |
+| `cross_entropy` | `cross_entropy_weighted` |
+
+A full comparison of the two APIs found eight differences. Three are language
+convention and stay — `blocks`, `ids` and `block_of` drop the `to_` and `get_` prefixes
+Rust uses. The five above were arbitrary: one concept, two names, and no way to guess
+which language had which. The Rust spelling wins because it says which distance, which
+Jaccard, which entropy, where the shorter Python name did not.
+
+`dit_count` was already unified in the crate's 0.3.0.
+
+### Examples
+
+`examples/` now holds four demos, each with a Rust twin: functional dependencies,
+clustering comparison, DFA minimisation, connected components. They are run by the
+test suite — an example nobody executes is unverified code that looks authoritative.
+
+One planned selling point did not survive measurement. The clustering demo was going
+to contrast `ditset_xor_distance` (a metric) against clustering indices (supposedly
+not), but checking 512,000 triples showed `1 - rand_agreement` never violates the
+triangle inequality either — the non-metric one is the *adjusted* Rand index, not Rand.
+The demo now checks both and reports the result instead of claiming it, and the
+difference it argues for is the one that holds: a scalar says how much, the lattice
+says what.
+
+
 ## 0.2.0 — breaking
 
 **Removed `meet`, `join`, `&`, `|`, and the order comparisons `<= < >= >`.**

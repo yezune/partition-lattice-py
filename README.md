@@ -74,6 +74,18 @@ exactly `w[u]` times. Note that a non-uniform weight breaks relabelling invarian
 Unlike the Rust `from_blocks`, `Partition.from_blocks` rejects a partial or
 overlapping cover instead of silently reassigning elements.
 
+## Examples
+
+Four demos, runnable as-is — `python examples/<name>.py`. Each has a Rust twin in the
+[crate](https://github.com/yezune/partition-lattice/tree/main/examples).
+
+| | what it shows |
+|---|---|
+| `functional_dependencies` | `X -> Y` **is** the refinement order, so finding dependencies needs no dependency-checking algorithm. Composite determinants are one `refine`. |
+| `clustering_comparison` | A scalar index says *how much* two clusterings differ; `coarsen` / `refine` / `destr` / `creat` say *in what way*, and keep the direction a single number discards. |
+| `dfa_minimisation` | Moore's algorithm is `refine` in a loop, and its fixed point is an exact integer comparison — no epsilon. |
+| `graph_components` | Folding edges with `coarsen` gives connected components. The join is the union-find. |
+
 ## Install
 
 ```

@@ -4,7 +4,7 @@
 
 [package]
 name = "partition-lattice-py"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 description = "Python bindings for the partition-lattice crate"
@@ -26,7 +26,7 @@ crate-type = ["cdylib", "rlib"]
 #
 # Aliased to `pl` for readability: `Inner` below is the crate's `Partition`, and the
 # short alias keeps the binding code from reading like it re-implements it.
-pl = { package = "partition-lattice", version = "0.2.0" }
+pl = { package = "partition-lattice", version = "0.3.0" }
 
 [dependencies.pyo3]
 version = "0.22"

@@ -171,11 +171,11 @@ impl PyPartition {
     /// pairs in different blocks. Compare these instead of the floats when you
     /// need exactness.
     fn dit_count(&self) -> usize {
-        self.inner.distinction_count()
+        self.inner.dit_count()
     }
 
     /// Normalised size of the symmetric difference of the two dit sets.
-    fn distance(&self, other: &Self) -> PyResult<f64> {
+    fn ditset_xor_distance(&self, other: &Self) -> PyResult<f64> {
         self.check_same_size(other)?;
         Ok(self.inner.ditset_xor_distance(&other.inner))
     }
@@ -187,7 +187,7 @@ impl PyPartition {
     }
 
     /// Logical divergence.
-    fn divergence(&self, other: &Self) -> PyResult<f64> {
+    fn logical_divergence(&self, other: &Self) -> PyResult<f64> {
         self.check_same_size(other)?;
         Ok(self.inner.logical_divergence(&other.inner))
     }
@@ -200,7 +200,7 @@ impl PyPartition {
 
     /// Jaccard similarity of the two dit sets, or `None` when neither partition
     /// distinguishes anything.
-    fn jaccard(&self, other: &Self) -> PyResult<Option<f64>> {
+    fn dit_set_jaccard(&self, other: &Self) -> PyResult<Option<f64>> {
         self.check_same_size(other)?;
         Ok(self.inner.dit_set_jaccard(&other.inner))
     }
@@ -210,7 +210,7 @@ impl PyPartition {
     /// A weight is a *multiplicity*, not a probability: the result equals the
     /// ordinary logical entropy of the multiset that repeats element `u` exactly
     /// `w[u]` times. Note that a non-uniform weight breaks relabelling invariance.
-    fn weighted_entropy(&self, weights: Vec<u64>) -> PyResult<(u64, u64)> {
+    fn logical_entropy_weighted(&self, weights: Vec<u64>) -> PyResult<(u64, u64)> {
         if weights.len() != self.inner.size() {
             return Err(PyValueError::new_err(format!(
                 "expected {} weights, got {}",
@@ -223,7 +223,7 @@ impl PyPartition {
 
     /// Logical cross-entropy: one partition measured with two product measures,
     /// as an exact `(numerator, denominator)` pair.
-    fn cross_entropy(&self, p: Vec<u64>, q: Vec<u64>) -> PyResult<(u64, u64)> {
+    fn cross_entropy_weighted(&self, p: Vec<u64>, q: Vec<u64>) -> PyResult<(u64, u64)> {
         let n = self.inner.size();
         if p.len() != n || q.len() != n {
             return Err(PyValueError::new_err(format!(
