@@ -25,7 +25,18 @@ jobs:
           # emulation of the whole interpreter, so it is checked, not executed.
           - { name: linux-aarch64, os: ubuntu-latest,  target: aarch64, manylinux: "2014", testable: false }
           - { name: windows-x64,   os: windows-latest, target: x64,     manylinux: "auto", testable: true  }
-          - { name: macos-x86_64,  os: macos-13,       target: x86_64,  manylinux: "auto", testable: true  }
+          # Cross-built from the Apple Silicon runner rather than run on macos-13.
+          # The Intel image is not obtainable on this account: in three separate runs this
+          # job sat queued while every other job finished in seconds, and twice it was
+          # cancelled at the 24-hour queue limit without ever being assigned a runner.
+          # A job that never starts is worse than a wheel that is checked instead of run —
+          # it blocked the whole workflow, and `publish` needs every build job.
+          #
+          # The trade is real and is stated rather than hidden: this wheel is no longer
+          # executed in CI (`testable: false`, as linux-aarch64 already is). It was executed
+          # before this change landed — built this way and run on Python 3.9 under Rosetta,
+          # 48 tests — and `abi3-floor` plus the metadata check still cover it.
+          - { name: macos-x86_64,  os: macos-14,       target: x86_64,  manylinux: "auto", testable: false }
           - { name: macos-arm64,   os: macos-14,       target: aarch64, manylinux: "auto", testable: true  }
     steps:
       - uses: actions/checkout@v4
