@@ -67,12 +67,22 @@ exactly `w[u]` times. Note that a non-uniform weight breaks relabelling invarian
 | Construction | `Partition(ids)`, `Partition.discrete(n)`, `Partition.indiscrete(n)`, `Partition.from_blocks(n, blocks)` |
 | Structure | `block_count()`, `blocks()`, `ids()`, `block_of(e)`, `len(p)` |
 | Operations | `refine(o)`, `coarsen(o)`, `refines(o)` |
-| Measures | `logical_entropy()`, `dit_count()`, `distance(o)`, `mutual_information(o)`, `divergence(o)`, `rand_agreement(o)`, `jaccard(o)` |
-| Exact measures | `weighted_entropy(w)`, `cross_entropy(p, q)` |
+| Measures | `logical_entropy()`, `dit_count()`, `ditset_xor_distance(o)`, `mutual_information(o)`, `logical_divergence(o)`, `rand_agreement(o)`, `dit_set_jaccard(o)` |
+| Exact measures | `logical_entropy_weighted(w)`, `cross_entropy_weighted(p, q)` |
 | Module | `dit_xor_count(a, b)`, `destr(a, b)`, `creat(a, b)` |
+| Endomaps | `components(c)` |
+| Counting | `all_partitions(n)`, `bell_number(n)` |
 
 Unlike the Rust `from_blocks`, `Partition.from_blocks` rejects a partial or
-overlapping cover instead of silently reassigning elements.
+overlapping cover instead of silently reassigning elements. Three other places where
+this layer is stricter than the crate: `components` rejects a target outside the
+universe, `all_partitions` refuses `n > 11` rather than exhaust memory, and
+`bell_number` refuses `n > 25` rather than wrap a 64-bit counter.
+
+`components(c)` takes an endomap as a list — `c[i]` is the image of state `i` — and
+returns the partition into weakly connected components of its functional graph. Each
+component holds exactly one periodic orbit, so `components(c).block_count()` counts
+those orbits.
 
 ## Examples — four algorithms, two operations
 

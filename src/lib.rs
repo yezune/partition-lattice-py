@@ -12,12 +12,30 @@
 //! - Binary operations on partitions of different sizes are not meaningful; the
 //!   Rust side does not check, so this layer does.
 
-use pl::{incidence, Partition as Inner};
+use pl::{endomap, expressiveness, incidence, pcc_arms, Partition as Inner};
 use pyo3::exceptions::{PyIndexError, PyValueError};
 use pyo3::prelude::*;
 use pyo3::types::PyType;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
+
+/// Ceiling on `all_partitions`. A memory-safety bound, not a mathematical one: the
+/// helper materialises every partition at once, so cost is `B(n)` and that is not a
+/// gentle curve. Measured peak RSS / wall clock on this build:
+///
+/// | n | B(n) | peak RSS | time |
+/// |---|---|---|---|
+/// | 10 | 115,975 | 41 MB | 0.3 s |
+/// | **11** | **678,570** | **248 MB** | **2.0 s** |
+/// | 12 | 4,213,597 | 1,422 MB | 13.6 s |
+///
+/// 12 is where an accidental call stops being an inconvenience, so the ceiling is 11.
+/// Raising it is a decision about peak RSS, not about correctness.
+const MAX_ENUMERABLE: usize = 11;
+
+/// Ceiling on `bell_number`. `B(25) = 4_638_590_332_229_999_353` fits in `u64` and
+/// `B(26) = 49_631_246_523_618_756_274` does not, so past 25 the count would wrap.
+const MAX_BELL: usize = 25;
 
 /// A partition of the finite universe `{0, ..., n-1}`.
 ///
@@ -311,6 +329,69 @@ fn creat(a: &PyPartition, b: &PyPartition) -> PyResult<i64> {
     Ok(incidence::creat(&a.inner, &b.inner))
 }
 
+// ── Endomap invariants and counting ───────────────────────────────────────────
+//
+// Exposed on request from the eigenbehavior project (`docs/LVM_REVIEW.md` §3.1),
+// which had `components` as 58 % of a pair-loop, `all_partitions` as the unit of
+// exhaustive verification, and `bell_number` hand-rolled per test file.
+
+/// Weakly connected components of the functional graph of `c`, as a partition.
+///
+/// `c[i]` is the image of state `i`, so `c` is an endomap of `{0, ..., len(c)-1}`.
+/// Each component holds exactly one periodic orbit, so `components(c).block_count()`
+/// is also the number of periodic orbits.
+///
+/// The Rust helper silently skips a target outside the universe; a target that does
+/// not name a state is a malformed endomap, so the boundary rejects it.
+#[pyfunction]
+fn components(c: Vec<usize>) -> PyResult<PyPartition> {
+    let n = c.len();
+    if let Some((i, &t)) = c.iter().enumerate().find(|(_, &t)| t >= n) {
+        return Err(PyValueError::new_err(format!(
+            "c[{i}] = {t} is not a state of a universe of size {n}"
+        )));
+    }
+    Ok(PyPartition::new(endomap::components(&c)))
+}
+
+/// Every partition of `{0, ..., n-1}`, in no particular order.
+///
+/// The length is `bell_number(n)`, which grows faster than exponentially — hence the
+/// ceiling at [`MAX_ENUMERABLE`], which is about peak memory rather than about what is
+/// computable. `n = 0` is the empty universe, whose single partition is the empty one;
+/// the Rust helper indexes an empty buffer there, so the boundary handles it.
+#[pyfunction]
+fn all_partitions(n: usize) -> PyResult<Vec<PyPartition>> {
+    if n == 0 {
+        return Ok(vec![PyPartition::new(Inner::from_ids(Vec::new()))]);
+    }
+    if n > MAX_ENUMERABLE {
+        return Err(PyValueError::new_err(format!(
+            "n = {n} would enumerate {} partitions; the ceiling is n = {MAX_ENUMERABLE}. \
+             Call bell_number(n) to size the request, or work with a sample instead.",
+            expressiveness::bell_number(n.min(25))
+        )));
+    }
+    Ok(pcc_arms::all_partitions(n)
+        .into_iter()
+        .map(PyPartition::new)
+        .collect())
+}
+
+/// `B(n) = |Pi(U)|` for `|U| = n` — the number of partitions of an n-element set.
+///
+/// Capped where the count stops fitting in 64 bits: `B(25)` fits and `B(26)` does not,
+/// so beyond 25 the Rust helper would wrap silently rather than report.
+#[pyfunction]
+fn bell_number(n: usize) -> PyResult<u64> {
+    if n > MAX_BELL {
+        return Err(PyValueError::new_err(format!(
+            "B({n}) exceeds a 64-bit integer; the ceiling is n = {MAX_BELL}"
+        )));
+    }
+    Ok(expressiveness::bell_number(n))
+}
+
 #[pymodule]
 fn _partition_lattice(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add("__version__", env!("CARGO_PKG_VERSION"))?;
@@ -318,5 +399,8 @@ fn _partition_lattice(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(dit_xor_count, m)?)?;
     m.add_function(wrap_pyfunction!(destr, m)?)?;
     m.add_function(wrap_pyfunction!(creat, m)?)?;
+    m.add_function(wrap_pyfunction!(components, m)?)?;
+    m.add_function(wrap_pyfunction!(all_partitions, m)?)?;
+    m.add_function(wrap_pyfunction!(bell_number, m)?)?;
     Ok(())
 }

@@ -7,7 +7,15 @@ import math
 
 import pytest
 
-from partition_lattice import Partition, creat, destr, dit_xor_count
+from partition_lattice import (
+    Partition,
+    all_partitions,
+    bell_number,
+    components,
+    creat,
+    destr,
+    dit_xor_count,
+)
 
 
 # --------------------------------------------------------------- construction ---
@@ -195,3 +203,77 @@ def test_repr_and_hash():
 def test_ids_roundtrip():
     p = Partition([3, 3, 7, 1])
     assert Partition(p.ids()) == p
+
+
+# ---------------------------------------------------------- endomap / counting ---
+# Exposed on request from the eigenbehavior project (docs/LVM_REVIEW.md §3.1):
+# `components` was 58 % of their pair-loop cost, `all_partitions` is the unit of
+# exhaustive verification, and `bell_number` was hand-rolled per test file.
+def test_components_of_identity_is_discrete():
+    """Every state is its own component when nothing moves."""
+    assert components([0, 1, 2, 3]) == Partition.discrete(4)
+
+
+def test_components_of_constant_is_indiscrete():
+    """A single sink pulls the whole universe into one component."""
+    assert components([0, 0, 0, 0]) == Partition.indiscrete(4)
+
+
+def test_components_counts_eigenbehaviours():
+    """Each weakly connected component holds exactly one periodic orbit."""
+    # Two disjoint 2-cycles: 0<->1 and 2<->3.
+    assert components([1, 0, 3, 2]).block_count() == 2
+    # One 2-cycle with a transient tail hanging off it.
+    assert components([1, 0, 1, 2]).block_count() == 1
+
+
+def test_components_is_label_blind():
+    """Component membership does not depend on how states are numbered."""
+    assert components([1, 0, 3, 2]) == Partition([0, 0, 1, 1])
+
+
+def test_components_rejects_out_of_range_target():
+    """Rust skips a target outside the universe; here that is an error."""
+    with pytest.raises(ValueError):
+        components([1, 0, 9])
+
+
+def test_components_of_empty_universe():
+    assert len(components([])) == 0
+
+
+def test_all_partitions_counts_bell():
+    for n in range(0, 7):
+        assert len(all_partitions(n)) == bell_number(n)
+
+
+def test_all_partitions_are_distinct_and_include_the_bounds():
+    ps = all_partitions(4)
+    assert len(set(ps)) == len(ps)
+    assert Partition.discrete(4) in ps
+    assert Partition.indiscrete(4) in ps
+
+
+def test_all_partitions_of_empty_universe_is_one_partition():
+    """|Pi(empty)| = 1, matching bell_number(0); the Rust helper panics here."""
+    ps = all_partitions(0)
+    assert len(ps) == 1
+    assert len(ps[0]) == 0
+
+
+def test_all_partitions_ceiling_is_sharp():
+    """The ceiling is a memory guard, so it has to bite exactly where documented."""
+    assert len(all_partitions(11)) == bell_number(11)
+    with pytest.raises(ValueError):
+        all_partitions(12)
+
+
+def test_bell_number_ceiling_is_sharp():
+    """B(25) fits in 64 bits and B(26) does not; past the ceiling it would wrap."""
+    assert bell_number(25) == 4638590332229999353
+    with pytest.raises(ValueError):
+        bell_number(26)
+
+
+def test_bell_number_known_values():
+    assert [bell_number(n) for n in range(9)] == [1, 1, 2, 5, 15, 52, 203, 877, 4140]

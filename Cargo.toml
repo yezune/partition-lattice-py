@@ -4,7 +4,7 @@
 
 [package]
 name = "partition-lattice-py"
-version = "0.3.1"
+version = "0.3.2"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 description = "Python bindings for the partition-lattice crate"
@@ -26,7 +26,9 @@ crate-type = ["cdylib", "rlib"]
 #
 # Aliased to `pl` for readability: `Inner` below is the crate's `Partition`, and the
 # short alias keeps the binding code from reading like it re-implements it.
-pl = { package = "partition-lattice", version = "0.3.0" }
+# `research` is on for `pcc_arms::all_partitions` — the exhaustive enumerator. It adds
+# no dependencies (`research = ["std"]`), only modules.
+pl = { package = "partition-lattice", version = "0.3.0", features = ["research"] }
 
 [dependencies.pyo3]
 version = "0.22"

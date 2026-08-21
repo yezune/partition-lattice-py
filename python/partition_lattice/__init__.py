@@ -11,9 +11,21 @@ in much of the literature).
 from ._partition_lattice import (
     Partition,
     __version__,
+    all_partitions,
+    bell_number,
+    components,
     creat,
     destr,
     dit_xor_count,
 )
 
-__all__ = ["Partition", "creat", "destr", "dit_xor_count", "__version__"]
+__all__ = [
+    "Partition",
+    "all_partitions",
+    "bell_number",
+    "components",
+    "creat",
+    "destr",
+    "dit_xor_count",
+    "__version__",
+]

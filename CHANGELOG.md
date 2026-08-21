@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.3.2
+
+Three functions exposed, all additive. Requested by the eigenbehavior project, which
+had re-implemented the first in Python (a union-find that was 58 % of a pair loop) and
+hand-rolled the third per test file.
+
+| | |
+|---|---|
+| `components(c)` | Weakly connected components of an endomap's functional graph, as a partition. Derived as a Join fold over edge partitions, not a graph traversal — the components *are* the transitive closure, and Join *is* that closure |
+| `all_partitions(n)` | Every partition of `{0, ..., n-1}` |
+| `bell_number(n)` | `B(n) = |Pi(U)|` for `|U| = n` |
+
+Two ceilings, both boundary policy rather than mathematics. `all_partitions` refuses
+`n > 11`: measured peak RSS is 248 MB at `n = 11` and 1,422 MB at `n = 12`, which is
+where an accidental call stops being an inconvenience. `bell_number` refuses `n > 25`,
+where the count stops fitting in 64 bits and would silently wrap.
+
+`components` rejects a target outside the universe; the crate silently skips it.
+`all_partitions(0)` returns the one partition of the empty universe, matching
+`bell_number(0) == 1`; the crate's helper indexes an empty buffer there.
+
+The dependency now enables the crate's `research` feature, which is where
+`all_partitions` lives. It pulls in no new dependencies.
+
+**Fixed:** the README API table still listed the five method names that 0.3.0 renamed
+(`distance`, `divergence`, `jaccard`, `weighted_entropy`, `cross_entropy`). The
+CHANGELOG recorded the rename and the table did not follow.
+
 ## 0.3.1
 
 Documentation only. The README now leads with what the examples are for: finding
